@@ -26,7 +26,6 @@ internal class CalendarService
             var value = Calendar.Load(file);
             foreach (var calendarEvent in value.Events)
             {
-                calendarEvent.Name = calendar.Key;
                 calendarEvent.Summary = string.Empty;
                 calendarEvent.Description = string.Empty;
             }
