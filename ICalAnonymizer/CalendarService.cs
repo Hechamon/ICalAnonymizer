@@ -26,13 +26,15 @@ internal class CalendarService
             var value = Calendar.Load(file);
             foreach (var calendarEvent in value.Events)
             {
-                calendarEvent.Summary = string.Empty;
+                calendarEvent.Summary = calendar.Key;
                 calendarEvent.Description = string.Empty;
             }
             
             resultCalendar.MergeWith(value);
         }
-
+        
+        resultCalendar.Properties["NAME"]?.SetValue(key);
+        
         return resultCalendar;
     }
 }

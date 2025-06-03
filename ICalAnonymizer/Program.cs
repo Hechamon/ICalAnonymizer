@@ -25,20 +25,34 @@ app.MapScalarApiReference();
 
 app.MapGet("/ical", async ([FromQuery]string key, CalendarService service, CancellationToken ct) => Results.Content(new CalendarSerializer(await service.GetCalendar(key,ct)).SerializeToString(),"text/calendar")).WithName("ical");
 
-app.MapPut("/config",
-    async ([FromQuery] string key, [FromHeader(Name = "x-api-key")] string apiKey,
-        [FromBody] IDictionary<string, Uri> calendars, ConfigService service, CancellationToken ct) =>
+app.MapPut("/config/{key}",
+    async (string key, [FromHeader(Name = "x-api-key")] string apiKey,
+        [FromBody] CalendarConfig calendars, ConfigService service, CancellationToken ct) =>
     {
-        await service.UpdateCalendar(key, apiKey, calendars, ct);
-        return Results.CreatedAtRoute("ical", new { key,});
+        await service.UpdateConfig(key, apiKey, calendars, ct);
+        return Results.CreatedAtRoute("config", new { key,});
     });
 
-app.MapDelete("/config",
-    async ([FromQuery] string key, [FromHeader(Name = "x-api-key")] string apiKey,
+app.MapDelete("/config/{key}",
+    async (string key, [FromHeader(Name = "x-api-key")] string apiKey,
         ConfigService service, CancellationToken ct) =>
     {
-        await service.DeleteCalendar(key, apiKey, ct);
+        await service.DeleteConfig(key, apiKey, ct);
         return Results.NoContent();
+    });
+
+app.MapGet("/config/{key}",
+    async (string key, [FromHeader(Name = "x-api-key")] string apiKey, ConfigService service, CancellationToken ct) =>
+    {
+        var config = await service.GetConfig(key, apiKey, ct);
+        return config == null ? Results.NotFound() : Results.Ok(config);
+    });
+
+app.MapGet("/config",
+    async ([FromHeader(Name = "x-api-key")] string apiKey, ConfigService service, CancellationToken ct) =>
+    {
+        var configs = await service.GetConfigIds(apiKey, ct);
+        return Results.Ok(new {configs});
     });
 
 app.UseHttpsRedirection();

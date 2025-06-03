@@ -22,7 +22,15 @@ internal class ConfigService
         return await JsonSerializer.DeserializeAsync<IDictionary<string, Uri>>(File.OpenRead(filePath),cancellationToken: ct);
     }
     
-    public async Task UpdateCalendar(string key, string apiKey, IDictionary<string, Uri> calendars, CancellationToken ct)
+    public async Task<CalendarConfig?> GetConfig(string key, string apiKey, CancellationToken ct)
+    {
+        if (!IsLoggedIn(apiKey)) throw new AuthenticationException("Invalid API Key");
+        var filePath = $"{_options.ConfigPath}/{key}.json";
+        if (!File.Exists(filePath)) return null;
+        return await JsonSerializer.DeserializeAsync<CalendarConfig>(File.OpenRead(filePath),cancellationToken: ct);
+    }
+    
+    public async Task UpdateConfig(string key, string apiKey, CalendarConfig calendars, CancellationToken ct)
     {
         if (!IsLoggedIn(apiKey)) throw new AuthenticationException("Invalid API key");
         var filePath = $"{_options.ConfigPath}/{key}.json";
@@ -30,10 +38,16 @@ internal class ConfigService
         await JsonSerializer.SerializeAsync(fileStream, calendars, cancellationToken: ct);
     }
 
-    public async Task DeleteCalendar(string key, string apiKey, CancellationToken ct)
+    public async Task DeleteConfig(string key, string apiKey, CancellationToken ct)
     {
         if (!IsLoggedIn(apiKey)) throw new AuthenticationException("Invalid API key");
         var filePath = $"{_options.ConfigPath}/{key}.json";
         if (File.Exists(filePath)) File.Delete(filePath);
+    }
+
+    public async Task<IList<string>> GetConfigIds(string apiKey, CancellationToken ct)
+    {
+        if(!IsLoggedIn(apiKey)) throw new AuthenticationException("Invalid API key");
+        return Directory.GetFiles(_options.ConfigPath, "*.json").Select(file => Path.GetFileNameWithoutExtension(file)).ToList();
     }
 }
